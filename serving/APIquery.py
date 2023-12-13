@@ -1,8 +1,9 @@
+import numpy as np
 import requests
 import json
 
 # URL for the predict endpoint
-url = 'http://127.0.0.1:5000/logs'
+urlLogs = 'http://127.0.0.1:5000/logs'
 urlDownload = 'http://127.0.0.1:5000/download_registry_model'
 urlPredict= 'http://127.0.0.1:5000/predict'
 
@@ -13,9 +14,20 @@ data = {
     'model-name': 'logistic_reg_distance',
     'model-version': '1.1.0',
     'data': {
-        'distance': 5.0
+        'distance': np.random.rand(10).tolist(),
     }
 }
+
+#data = {
+#    'comet-workspace': 'me-pic',
+#    'comet-project': 'milestone-2',
+#    'model-name': 'logistic_reg_distance',
+#    'model-version': '1.1.0',
+#    'data': {
+#        'distance': np.random.rand(10).tolist(),
+#        'angle': np.random.rand(10).tolist()
+#    }
+#}
 
 #data = {
 #    'comet-workspace': 'me-pic',
@@ -28,16 +40,11 @@ data = {
 #    }
 #}
 
-# Convert the data to JSON format
+
 json_data = json.dumps(data)
-
-# Set the headers for the POST request
 headers = {'Content-Type': 'application/json'}
+response = requests.post('http://127.0.0.1:5000/predict', data=json_data, headers=headers)
 
-# Make the POST request
-#response = requests.get(url, data=json_data, headers=headers)
-#response = requests.post(urlDownload, data=json_data, headers=headers)
-response = requests.post(urlPredict, data=json_data, headers=headers)
 
 # Check the response
 if response.status_code == 200:

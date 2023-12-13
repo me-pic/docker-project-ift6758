@@ -11,6 +11,8 @@ gunicorn can be installed via:
 import os
 import pickle
 import logging
+
+import numpy as np
 import xgboost
 from flask import Flask, request, jsonify
 from flask_caching import Cache
@@ -65,6 +67,7 @@ with app.app_context():
             loaded_model = pickle.load(file)
             app.logger.info(f"{init_model['model-name']} was successfully loaded...")
             cache.set('loaded_model', loaded_model)
+            cache.set('loaded_model_name', init_model["model-name"])
             app.logger.info(f'{init_model["model-name"]} was cached ...')
 
     except Exception as e:
@@ -136,6 +139,7 @@ def download_registry_model():
             loaded_model = pickle.load(file)
             app.logger.info(f"{json['model-name']} was successfully loaded...")
             cache.set('loaded_model', loaded_model)
+            cache.set('loaded_model_name', json["model-name"])
             app.logger.info(f'{json["model-name"]} was cached ...')
             response += "was successfully loaded..."
 
@@ -155,6 +159,7 @@ def download_registry_model():
                 loaded_model = pickle.load(file)
                 app.logger.info(f"{json['model-name']} was successfully loaded...")
                 cache.set('loaded_model', loaded_model)
+                cache.set('loaded_model_name', json["model-name"])
                 app.logger.info(f'{json["model-name"]} was cached ...')
                 response += "was successfully loaded..."
 
@@ -188,19 +193,35 @@ def predict():
     json_data = request.get_json()
     data = json_data['data']
     app.logger.info(F"JSON DATA : {data}")
-    df = pd.DataFrame([data])
+    df = pd.DataFrame(data)
     app.logger.info(F"DF : {df}")
     response = None
 
-
     try:
         model = cache.get('loaded_model')
+        model_name = cache.get('loaded_model_name')
         app.logger.info("model loaded ...")
-        df = df.values.reshape(-1, 1)
-        app.logger.info(f"Reshaped df : {df}")
-        probs = model.predict_proba(df)
-        app.logger.info(f"probs : {probs}")
-        response = probs.tolist()
+
+        if model_name == "logistic_reg_distance":
+            app.logger.info("logistic_reg_distance loaded ...")
+            # on ramasse seulement le data['distance']
+            probs = model.predict_proba(df)
+            app.logger.info(f"probs : {probs}")
+            response = probs.tolist()
+
+        elif model_name == "r-gression-logistique-entrain-sur-la-distance-et-l-angle":
+            app.logger.info("model name : ", model_name)
+            # SI cest DISNTANCE-ANGLE, on ramasse le data['distance'] et data['angle']
+            app.logger.info("New DF : ", df)
+
+
+
+        # TODO: on veut verifier le model quon a de loader
+        #   (on pourrait cache le nom du modele a chaque fois quon le load afin de pouvoir faire le check ici)
+        # TODO: Si cest DISTANCE,
+        # TODO: SINON,
+
+        # TODO: ON VEUT PREDIRE POUR UN DF COMPLET ET NON JUSTE UN
 
     except Exception as e:
         app.logger.info("Error encountered ...", e)
@@ -209,6 +230,7 @@ def predict():
 
 
     app.logger.info("---------------------- Predict Model END ----------------------")
+    app.logger.info("response : ")
     app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
 
