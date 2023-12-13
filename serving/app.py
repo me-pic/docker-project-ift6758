@@ -188,17 +188,30 @@ def predict():
     json_data = request.get_json()
     data = json_data['data']
     app.logger.info(F"JSON DATA : {data}")
-    #app.logger.info(json_data)
-    #temp = list(json_data.keys())[0]
-    #df = pd.json_normalize(json_data, list(json_data.keys())[0])
-    # TODO:
-    raise NotImplementedError("TODO: implement this enpdoint")
-    
+    df = pd.DataFrame([data])
+    app.logger.info(F"DF : {df}")
     response = None
+
+
+    try:
+        model = cache.get('loaded_model')
+        app.logger.info("model loaded ...")
+        df = df.values.reshape(-1, 1)
+        app.logger.info(f"Reshaped df : {df}")
+        probs = model.predict_proba(df)
+        app.logger.info(f"probs : {probs}")
+        response = probs.tolist()
+
+    except Exception as e:
+        app.logger.info("Error encountered ...", e)
+
+
+
 
     app.logger.info("---------------------- Predict Model END ----------------------")
     app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
+
 
 if __name__ == '__main__':
     app.run(debug=True)

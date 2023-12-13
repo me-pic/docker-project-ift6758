@@ -13,20 +13,20 @@ data = {
     'model-name': 'logistic_reg_distance',
     'model-version': '1.1.0',
     'data': {
-        'distance': 5
+        'distance': 5.0
     }
 }
 
-data = {
-    'comet-workspace': 'me-pic',
-    'comet-project': 'milestone-2',
-    'model-name': 'r-gression-logistique-entrain-sur-la-distance-et-l-angle',
-    'model-version': '1.1.0',
-    'data': {
-            'distance': 5,
-            'angle': 10
-    }
-}
+#data = {
+#    'comet-workspace': 'me-pic',
+#    'comet-project': 'milestone-2',
+#    'model-name': 'r-gression-logistique-entrain-sur-la-distance-et-l-angle',
+#    'model-version': '1.1.0',
+#    'data': {
+#            'distance': 5.0,
+#            'angle': 10.0
+#    }
+#}
 
 # Convert the data to JSON format
 json_data = json.dumps(data)
@@ -36,6 +36,7 @@ headers = {'Content-Type': 'application/json'}
 
 # Make the POST request
 #response = requests.get(url, data=json_data, headers=headers)
+#response = requests.post(urlDownload, data=json_data, headers=headers)
 response = requests.post(urlPredict, data=json_data, headers=headers)
 
 # Check the response
