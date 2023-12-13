@@ -39,7 +39,9 @@ app.config.from_mapping(config)
 cache = Cache(app=app)
 
 # On start
-with app.app_context():
+
+@app.before_first_request
+def Init():
     """
     Hook to handle any initialization before the first request (e.g. load model,
     setup logging handler, etc.)
@@ -143,7 +145,7 @@ def download_registry_model():
             app.logger.info(f'{json["model-name"]} was cached ...')
             response += "was successfully loaded..."
 
-    else :
+    else:
         try:
             # Si non, essayez de télécharger le modèle:
             output_path = f"./models/{json['model-name']}"
@@ -161,7 +163,7 @@ def download_registry_model():
                 cache.set('loaded_model', loaded_model)
                 cache.set('loaded_model_name', json["model-name"])
                 app.logger.info(f'{json["model-name"]} was cached ...')
-                response += "was successfully loaded..."
+                response += " was successfully loaded..."
 
         except Exception as e:
             # En cas d'échec, écrivez dans les logs qu'il y a eu un échec et conservez le modèle actuellement chargé
@@ -172,7 +174,7 @@ def download_registry_model():
     # logic and querying of the CometML servers away to keep it clean here
 
     app.logger.info("---------------------- Download Registry Model END ----------------------")
-    app.logger.info(" RESPONSE : " + response)
+    app.logger.info(f" RESPONSE : {response}")
     return jsonify(response)  # response must be json serializable!
 
 
@@ -200,40 +202,28 @@ def predict():
     try:
         model = cache.get('loaded_model')
         model_name = cache.get('loaded_model_name')
-        app.logger.info("model loaded ...")
+        app.logger.info(f"model {model}")
+        app.logger.info(f"model loaded {model_name}")
 
         if model_name == "logistic_reg_distance":
             app.logger.info("logistic_reg_distance loaded ...")
             # on ramasse seulement le data['distance']
-            probs = model.predict_proba(df)
+            log_reg_df = df.drop(columns=['shot_angle'])
+            probs = model.predict_proba(log_reg_df)
             app.logger.info(f"probs : {probs}")
             response = probs.tolist()
 
         elif model_name == "r-gression-logistique-entrain-sur-la-distance-et-l-angle":
-            app.logger.info("model name : ", model_name)
+            app.logger.info("r-gression-logistique-entrain-sur-la-distance-et-l-angle loaded ... ")
             # SI cest DISNTANCE-ANGLE, on ramasse le data['distance'] et data['angle']
-            app.logger.info("New DF : ", df)
-
-
-
-        # TODO: on veut verifier le model quon a de loader
-        #   (on pourrait cache le nom du modele a chaque fois quon le load afin de pouvoir faire le check ici)
-        # TODO: Si cest DISTANCE,
-        # TODO: SINON,
-
-        # TODO: ON VEUT PREDIRE POUR UN DF COMPLET ET NON JUSTE UN
-
+            probs = model.predict_proba(df)
+            app.logger.info(f"probs : {probs}")
+            response = probs.tolist()
     except Exception as e:
         app.logger.info("Error encountered ...", e)
-
-
-
-
     app.logger.info("---------------------- Predict Model END ----------------------")
-    app.logger.info("response : ")
-    app.logger.info(response)
+    app.logger.info(f"response : {response}")
     return jsonify(response)  # response must be json serializable!
-
 
 if __name__ == '__main__':
     app.run(debug=True)
