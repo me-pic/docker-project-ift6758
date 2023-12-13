@@ -63,9 +63,10 @@ with app.app_context():
         file_name = os.path.join(output_path, file_dir[0])
         with open(file_name, 'rb') as file:
             loaded_model = pickle.load(file)
-            print(file_name)
+            app.logger.info(f"{init_model['model-name']} was successfully loaded...")
             cache.set('loaded_model', loaded_model)
-            app.logger.info(f"loaded model : {init_model['model-name']}.")
+            app.logger.info(f'{init_model["model-name"]} was cached ...')
+
     except Exception as e:
         app.logger.info("Error encountered ...", e)
     app.logger.info("Init End ...")
@@ -108,35 +109,66 @@ def download_registry_model():
         }
     
     """
+    def GetModelFilePath(model_name):
+        if model_name == "logistic_reg_distance":
+            return f"models/{json['model-name']}/{json['model-name']}.pickle"
+        elif model_name == "r-gression-logistique-entrain-sur-la-distance-et-l-angle":
+            return f"models/{json['model-name']}/bmodel_3.pickle"
+
+
     # Get POST json data
     json = request.get_json()
-    app.logger.info("Download Registry Model Start ... ")
+    app.logger.info("---------------------- Download Registry Model START ----------------------")
     app.logger.info(json)
 
-    json['model_name'] = json
+    response = json['model-name']
+
     # The comet API key should be retrieved from the ${COMET_API_KEY} environment variable.
     comet_api_key = os.environ.get("COMET_API_KEY", None)
 
-    # TODO: check to see if the model you are querying for is already downloaded
+    # check to see if the model you are querying for is already downloaded
+    model_file_path = GetModelFilePath(json['model-name'])
 
-    # TODO: if yes, load that model and write to the log about the model change.  
-    # eg: app.logger.info(<LOG STRING>)
-    
-    # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
-    # about the model change. If it fails, write to the log about the failure and keep the 
-    # currently loaded model
+    if os.path.exists(model_file_path):
+        app.logger.info(f"{json['model-name']} exists ...")
+        # if yes, load that model and write to the log about the model change.
+        with open(model_file_path, 'rb') as file:
+            loaded_model = pickle.load(file)
+            app.logger.info(f"{json['model-name']} was successfully loaded...")
+            cache.set('loaded_model', loaded_model)
+            app.logger.info(f'{json["model-name"]} was cached ...')
+            response += "was successfully loaded..."
+
+    else :
+        try:
+            # Si non, essayez de télécharger le modèle:
+            output_path = f"./models/{json['model-name']}"
+            os.makedirs("./models", exist_ok=True)
+            comet_api.download_registry_model(workspace=json['comet-workspace'],
+                                              registry_name=json['model-name'],
+                                              version=json['model-version'],
+                                              output_path=output_path,
+                                              expand=True)
+            # Si ca réussit, chargez ce modèle et écrivez dans les logs que le modèle change
+            app.logger.info(f"{json['model-name']} was successfully downloaded ...")
+            with open(model_file_path, 'rb') as file:
+                loaded_model = pickle.load(file)
+                app.logger.info(f"{json['model-name']} was successfully loaded...")
+                cache.set('loaded_model', loaded_model)
+                app.logger.info(f'{json["model-name"]} was cached ...')
+                response += "was successfully loaded..."
+
+        except Exception as e:
+            # En cas d'échec, écrivez dans les logs qu'il y a eu un échec et conservez le modèle actuellement chargé
+            app.logger.info("Error encountered ...", e)
+            app.logger.info("KEEPING CURRENT LOADED MODEL...", )
 
     # Tip: you can implement a "CometMLClient" similar to your App client to abstract all of this
     # logic and querying of the CometML servers away to keep it clean here
 
-    raise NotImplementedError("TODO: implement this endpoint")
-
-    response = None
-
-    app.logger.info(response)
+    app.logger.info("---------------------- Download Registry Model END ----------------------")
+    app.logger.info(" RESPONSE : " + response)
     return jsonify(response)  # response must be json serializable!
-
-
 
 
 # Prédit la probabilité que le tir soit un but compte tenu des inputs
@@ -145,20 +177,26 @@ def download_registry_model():
 # Sortie: Les prédictions pour toutes les caractéristiques; le output
 @app.route("/predict", methods=["POST"])
 def predict():
+
     """
     Handles POST requests made to http://IP_ADDRESS:PORT/predict
 
     Returns predictions
     """
+    app.logger.info("---------------------- Predict Model START ----------------------")
     # Get POST json data
-    json = request.get_json()
-    app.logger.info(json)
-
+    json_data = request.get_json()
+    data = json_data['data']
+    app.logger.info(F"JSON DATA : {data}")
+    #app.logger.info(json_data)
+    #temp = list(json_data.keys())[0]
+    #df = pd.json_normalize(json_data, list(json_data.keys())[0])
     # TODO:
     raise NotImplementedError("TODO: implement this enpdoint")
     
     response = None
 
+    app.logger.info("---------------------- Predict Model END ----------------------")
     app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
 
