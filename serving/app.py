@@ -48,7 +48,7 @@ def Init():
     """
     # TODO: setup basic logging configuration
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
-    app.logger.info("Init ...")
+    app.logger.info("---------------------- Init START ----------------------")
 
     # TODO: any other initialization before the first request (e.g. load default model)
     try:
@@ -74,7 +74,7 @@ def Init():
 
     except Exception as e:
         app.logger.info("Error encountered ...", e)
-    app.logger.info("Init End ...")
+    app.logger.info("---------------------- Init END ----------------------")
 
 # http://127.0.0.1:5000/logs
 @app.route("/logs", methods=["GET"])
