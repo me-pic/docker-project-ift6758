@@ -150,6 +150,7 @@ def download_registry_model():
             # Si non, essayez de télécharger le modèle:
             output_path = f"./models/{json['model-name']}"
             os.makedirs("./models", exist_ok=True)
+            comet_api = API(api_key)
             comet_api.download_registry_model(workspace=json['comet-workspace'],
                                               registry_name=json['model-name'],
                                               version=json['model-version'],
