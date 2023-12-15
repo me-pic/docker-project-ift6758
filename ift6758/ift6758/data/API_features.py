@@ -140,7 +140,7 @@ def retrieve_nhl_play_by_play_modified(game_id):
     df = pd.DataFrame(columns=['shot_distance', 'shot_angle', 'empty_goal','is_goal'])
 
     # Appliquer les fonctions
-    df['shot_distance'] = df_extracted_data.apply(lambda row: angle_shot(row['xCoord'], row['yCoord']), axis=1)
+    df['shot_distance'] = df_extracted_data.apply(lambda row: distance_shot(row['xCoord'], row['yCoord']), axis=1)
     df['shot_angle'] = df_extracted_data.apply(lambda row: angle_shot(row['xCoord'], row['yCoord']), axis=1)
     df['empty_goal'] = goaliePresent(df_extracted_data, awayTeam_id)
     df['is_goal'] = df_extracted_data['isGoal']

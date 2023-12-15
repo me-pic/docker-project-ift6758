@@ -15,7 +15,7 @@ class ServingClient:
         if features is None:
             features = ["distance"]
         self.features = features
-
+        
         # any other potential initialization
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
