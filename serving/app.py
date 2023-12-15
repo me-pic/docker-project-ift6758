@@ -38,9 +38,7 @@ app = Flask(__name__)
 app.config.from_mapping(config)
 cache = Cache(app=app)
 
-# On start
 
-@app.before_first_request
 def Init():
     """
     Hook to handle any initialization before the first request (e.g. load model,
@@ -76,14 +74,18 @@ def Init():
         app.logger.info("Error encountered ...", e)
     app.logger.info("---------------------- Init END ----------------------")
 
+print("Calling Init !")
+Init()
+
+
 # http://127.0.0.1:5000/logs
 @app.route("/logs", methods=["GET"])
 def logs():
     """Reads data from the log file and returns them as the response"""
     with open(LOG_FILE) as file:
         logs = file.read().splitlines()
-    response = logs
-    return jsonify(response)  # response must be json serializable!
+        response = logs
+        return jsonify(response)  # response must be json serializable!
 
 
 
