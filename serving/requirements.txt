@@ -1,2 +1,8 @@
 gunicorn
 waitress
+xgboost
+flask
+Flask-Caching
+pandas
+comet_ml
+scikit-learn
