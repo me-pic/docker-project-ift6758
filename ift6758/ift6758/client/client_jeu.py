@@ -26,11 +26,11 @@ class GameClient:
         
         # if same game, slice. last_eventIdx was set in the last call
         if self.gameId == gameId:
-            df = df.iloc[self.Tracker:] 
+            df = df.iloc[self.Tracker+1:] 
             if len(df) == 0: return None
             
         #self.game_ended = "GAME_END" in df["eventType"].values
-        self.last_eventIdx = df.index[-1]
+        self.Tracker = df.index[-1]
 
 
         self.gameId = gameId
