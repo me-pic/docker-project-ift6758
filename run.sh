@@ -8,4 +8,8 @@
 # using -i -t: instructs Docker to allocate a pseudo-TTY connected to the container's stdin
 # ref: https://docs.docker.com/engine/reference/commandline/run/
 
-docker run -d -p 5000:5000 -e COMET_API_KEY=$COMET_API_KEY -i -t ./ift6758/serving:latest
+#first port: accept the HTTP requests on that port, second: local port
+
+echo "Running serving container on port ${SERVING_PORT}"
+
+docker run -d -p 5000:5000 -e COMET_API_KEY=$COMET_API_KEY -ti --name group8 ift6758/serving:0.0.1
