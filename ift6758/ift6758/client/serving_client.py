@@ -13,12 +13,14 @@ class ServingClient:
         logger.info(f"Initializing client; base URL: {self.base_url}")
 
         if features is None:
-            features = ["distance"]
+            features = ["distance","Angle"]
         self.features = features
 
         # any other potential initialization
+        self.previous_model = ""
+        self.current_model = ""
 
-    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, X: pd.DataFrame, features) -> pd.DataFrame:
         """
         Formats the inputs into an appropriate payload for a POST request, and queries the
         prediction service. Retrieves the response from the server, and processes it back into a
@@ -27,13 +29,24 @@ class ServingClient:
         Args:
             X (Dataframe): Input dataframe to submit to the prediction service.
         """
+        if features is not None:
+            X = X[features]
+        else:
+            X = X[self.features]
+        json = requests.post(self.base_url + "/predict", json=X.to_json())
 
-        raise NotImplementedError("TODO: implement this function")
+        if json.status_code == 200:
+            liste = json.content.decode("utf-8")
+            liste = liste[1:len(liste) - 1].split(sep=",")
+            liste = [float(i) for i in liste]
+        else:
+            raise Exception(f"The application returned the error {json.status_code}")
+        return pd.DataFrame(liste)
 
     def logs(self) -> dict:
         """Get server logs"""
-
-        raise NotImplementedError("TODO: implement this function")
+        log = requests.get(self.base_url + "/logs")
+        raise log
 
     def download_registry_model(self, workspace: str, model: str, version: str) -> dict:
         """
@@ -50,5 +63,14 @@ class ServingClient:
             model (str): The model in the Comet ML registry to download
             version (str): The model version to download
         """
+        self.last_model_name = self.current_model_name
+        self.current_model_name = model
+        client_choice = {
+            "workspace": workspace,
+            "model": model,
+            "version": version
+        }
 
-        raise NotImplementedError("TODO: implement this function")
+        response = requests.post(self.base_url + "/download_registry_model", json=client_choice)
+        response = response.json()
+        return response
