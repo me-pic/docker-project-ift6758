@@ -12,7 +12,7 @@ class GameClient:
         
     def process_query(self, gameId, model_name="r-gression-logistique-entrain-sur-la-distance-et-l-angle"):
         """
-        Produces a dataframe with the features required by the XGBoost model.
+        Produces a dataframe with the features required the model.
         Returns None if the game has already been fully processed, or if the updated
             records do not contain data (e.g. breaks, period changes, etc.)
         Returns a dataframe if valid records are found.
