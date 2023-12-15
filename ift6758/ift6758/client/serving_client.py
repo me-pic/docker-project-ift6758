@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import logging
 
-
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -15,7 +15,7 @@ class ServingClient:
         if features is None:
             features = ["distance"]
         self.features = features
-
+        
         # any other potential initialization
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -27,13 +27,41 @@ class ServingClient:
         Args:
             X (Dataframe): Input dataframe to submit to the prediction service.
         """
+        logger.info("Starting prediction request")
+        url = f"{self.base_url}/predict"
+        headers = {'Content-Type': 'application/json'}
+        data = X.to_json(orient='records')
 
-        raise NotImplementedError("TODO: implement this function")
+        try:
+            response = requests.post(url, headers=headers, json=json.loads(data))
+            if response.status_code == 200:
+                logger.info("Prediction successful")
+                return pd.DataFrame(response.json())
+            else:
+                logger.error(f"Failed to get prediction: {response.status_code} {response.text}")
+                return pd.DataFrame()
+        except Exception as e:
+            logger.exception("Exception occurred during prediction request")
+            return pd.DataFrame()
+
 
     def logs(self) -> dict:
         """Get server logs"""
 
-        raise NotImplementedError("TODO: implement this function")
+        logger.info("Fetching server logs")
+        url = f"{self.base_url}/logs"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                logger.info("Successfully fetched logs")
+                return response.json()
+            else:
+                logger.error(f"Failed to fetch logs: {response.status_code} {response.text}")
+                return {}
+        except Exception as e:
+            logger.exception("Exception occurred while fetching logs")
+            return {}
+
 
     def download_registry_model(self, workspace: str, model: str, version: str) -> dict:
         """
@@ -50,5 +78,23 @@ class ServingClient:
             model (str): The model in the Comet ML registry to download
             version (str): The model version to download
         """
-
-        raise NotImplementedError("TODO: implement this function")
+        logger.info(f"Requesting download of model {model} from workspace {workspace} with version {version}")
+        url = f"{self.base_url}/download_registry_model"
+        headers = {'Content-Type': 'application/json'}
+        
+        data = {
+            'comet-workspace': workspace,
+            'model-name': model,
+            'model-version': version
+        }
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            if response.status_code == 200:
+                logger.info("Model download successful")
+                return response.json()
+            else:
+                logger.error(f"Failed to download model: {response.status_code} {response.text}")
+                return {}
+        except Exception as e:
+            logger.exception("Exception occurred during model download request")
+            return {}
