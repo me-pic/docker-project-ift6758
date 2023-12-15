@@ -36,5 +36,5 @@ class GameClient:
         self.gameId = gameId
         if model_name == 'r-gression-logistique-entrain-sur-la-distance-et-l-angle':
             return df 
-        else : return df.drop('angle', axis=1)
+        else : return df.drop('shot_angle', axis=1)
     
