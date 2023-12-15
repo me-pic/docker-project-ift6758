@@ -52,7 +52,7 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
-ENV SERVING_PORT=5000
+ENV SERVING_PORT=5001
 EXPOSE ${SERVING_PORT}
 
 # TODO: specify default command - this is not required because you can always specify the command

@@ -9,7 +9,7 @@ services:
       #args:
     image: ift6758/serving:0.0.1
     ports: 
-      - 5000:5000
+      - 5001:5001
 #    environment:
 #      DOCKER_ENV_VAR = ${LOCAL_ENV_VAR}
 #      COMET_API_KEY = ${COMET_API_KEY}

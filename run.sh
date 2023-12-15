@@ -10,6 +10,5 @@
 
 #first port: accept the HTTP requests on that port, second: local port
 
-echo "Running serving container on port ${SERVING_PORT}"
 
-docker run -d -p 5000:5000 -e COMET_API_KEY=$COMET_API_KEY -ti --name group8 ift6758/serving:0.0.1
+docker run -d -p 5001:5001 -e COMET_API_KEY=$COMET_API_KEY -ti --name group8 ift6758/serving:latest
