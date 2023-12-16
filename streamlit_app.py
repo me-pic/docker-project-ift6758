@@ -58,7 +58,7 @@ if 'teams_full' not in st.session_state:
     st.session_state.teams_full = None
 
 ### functions
-def get_play_by_play(self, game_id: str):
+def get_play_by_play(game_id: str):
 
         """
         If file doesn't exist: Downloads play-by-play data for the give game ID and returns the raw json content
@@ -254,7 +254,7 @@ with st.container():
         st.subheader(f"{st.session_state.teams_full[0]} VS {st.session_state.teams_full[1]}")
 
         period, periodTimeRemaining = get_period_info()
-        if st.session_state.gameClient.game_ended: 
+        if check_game_end(game_id): 
             st.write('**Game ended!**')
             st.write(f'Game end at: **Period:** {period}  --  **Period time remaining:** {periodTimeRemaining}')  
         else: 
