@@ -228,7 +228,7 @@ with st.container():
             df['Model Output'] = pred_MODEL
 
             # Calculate game actual goals and goal predictions 
-            real_goals, teams_A_H, teams_full = st.session_state.gameClient.get_scores()
+            real_goals, teams_A_H, teams_full = get_scores(game_id)
             pred_goals = calculate_game_goals(df_MODEL, pred_MODEL, teams_A_H) 
              
             for i in range(len(teams_A_H)):
