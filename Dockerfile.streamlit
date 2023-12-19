@@ -45,7 +45,7 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-ADD serving/ /code/
+ADD ift6758/ /code/
 ADD streamlit_app.py /code/
 WORKDIR /code
 
