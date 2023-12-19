@@ -45,13 +45,20 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-
+ADD serving/ /code/
+ADD streamlit_app.py /code/
+WORKDIR /code
 
 # TODO: install libs
-
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
+ENV STREAMLIT_PORT=5002
+EXPOSE ${STREAMLIT_PORT}
 
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
+
+CMD streamlit run streamlit_app.py --server.port ${STREAMLIT_PORT} --server.address 0.0.0.0
