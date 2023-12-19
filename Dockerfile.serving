@@ -43,15 +43,19 @@ WORKDIR /code
 #       CMD <SHELL COMMAND>
 
 
-
 # TODO: add code, optionally a default model if you want 
-
+ADD serving/ /code/
+WORKDIR /code
 
 # TODO: install libs
-
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
-
+ENV SERVING_PORT=5001
+EXPOSE ${SERVING_PORT}
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
+# command Adapted from hw5
+CMD exec gunicorn --bind 0.0.0.0:${SERVING_PORT} --timeout 600 app:app
