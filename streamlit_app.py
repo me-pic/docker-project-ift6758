@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import sys
 import requests
 
-
-from ift6758.ift6758.client.client_jeu import GameClient
-from ift6758.ift6758.client.serving_client import ServingClient
+from ift6758.ift6758.client.client_jeu import *
+from ift6758.ift6758.client.serving_client import *
 
 
 """
@@ -16,10 +16,8 @@ Just make sure that the required functionality is included as well
 """
 
 
-IP = os.environ.get("SERVING_IP", "127.0.0.1")
-PORT = os.environ.get("SERVING_PORT", 5000)
-base_url = f"http://{IP}:{PORT}"
-
+IP = "127.0.0.1"
+PORT = 5000
 
 
 st.title("Hockey Visualisation App")
@@ -30,8 +28,8 @@ if 'gameClient' not in st.session_state:
     st.session_state['gameClient'] = Client_jeu
 
 if 'servingClient' not in st.session_state:
-    ServingClient = ServingClient(ip=IP, port=PORT)
-    st.session_state['servingClient'] = ServingClient
+    client = ServingClient(ip=IP, port=PORT)
+    st.session_state['servingClient'] = client
 
 if 'model_downloaded' not in st.session_state:
      st.session_state['model_downloaded'] = False
@@ -77,73 +75,85 @@ def get_play_by_play(game_id: str):
 
         return json_response
 
-def get_scores(game_id: str):
-        """
-        Get number of real goals from live feed dict (raw data)
-        """
-
-        data = get_play_by_play(game_id)
-        goal_a = None # away team
-        goal_h = None # home team
-        
-        if data["liveData"].get("linescore") is not None:
-            goal_a = data["liveData"]["linescore"]["teams"]["away"]["goals"]
-            goal_h = data["liveData"]["linescore"]["teams"]["home"]["goals"]
-        
-        # Bug while trying to get number of goals from linescore
-        if goal_a is None and goal_h is None: 
-            goal_a = data["liveData"]["plays"]["currentPlay"]["about"]["goals"]["away"]
-            goal_h = data["liveData"]["plays"]["currentPlay"]["about"]["goals"]["home"]
-
-        # Get away and home teams tricode
-        away = data["gameData"]["teams"]["away"]["triCode"]
-        home = data["gameData"]["teams"]["home"]["triCode"]
-
-        # Get away and home teams full name
-        away_full = data["gameData"]["teams"]["away"]["name"]
-        home_full = data["gameData"]["teams"]["home"]["name"]
-
-        real_goals = [goal_a, goal_h]
-        teams = [away, home]
-        teams_full = [away_full, home_full]  
-
-        return real_goals, teams, teams_full
-
-
-def calculate_game_goals(df: pd.DataFrame, pred: pd.DataFrame, teams_A_H: list):
+def get_scores(data_never_seen_json: str):
     """
-    Sum over model_pred for each team 
-        Input: 
-            df (DataFrame), with feature values 
-            pred (DataFrame), model prediction for every event
-            teams_A_H (list), teams tricode: [away, home]
-        Output: 
-            pred_goals (list), predicted number of goals for each team
-            teams (list), abbreviation for each team
-
+    Get number of real goals from live feed dict (raw data).
     """
-    df = df.reset_index(drop=True)
+    data = get_play_by_play(game_id)
+    
+    away_team_name = data_never_seen_json['awayTeam']['name']['default']
+    away_team_id = data_never_seen_json['awayTeam']['id']
+    home_team_name = data_never_seen_json['homeTeam']['name']['default']
+    home_team_id = data_never_seen_json['homeTeam']['id']
+    
+    Team_info = {
+        'away_team_name' : away_team_name, 
+        'away_team_id' : away_team_id, 
+        'home_team_name' : home_team_name, 
+        'home_team_id' : home_team_id
+    } 
 
-    df['Model Output'] = pred
 
-    pred_team1 = df.loc[df['team']==teams_A_H[0] , 'Model Output']
-    sum_pred_team1 = pred_team1.sum()
-    pred_team2 = df.loc[df['team']==teams_A_H[1] , 'Model Output']
-    sum_pred_team2 = pred_team2.sum()
+    shots_on_goal = []
 
-    pred_goals = [sum_pred_team1, sum_pred_team2]
+    for event in data['plays']:
+        if event.get("typeDescKey") == "shot-on-goal":
+            details = event.get('details', {})
+            shot_info = {
+                'away_score': details.get('awaySOG', 0),
+                'home_score': details.get('homeSOG', 0),
+                'event_owner_team_id': details.get('eventOwnerTeamId')
+            }
+            shots_on_goal.append(shot_info)
+
+    return shots_on_goal, Team_info
+
+
+
+def calculate_game_goals(df: pd.DataFrame, shots_on_goal_info,Team_info, threshold=0.5):
+    """
+    Sum over model predictions for each team and determine goals based on a threshold.
+    
+    Input: 
+        df (DataFrame): DataFrame with feature values and model predictions.
+        shots_on_goal_info (list of dicts): Information about each "shot-on-goal" event.
+        threshold (float): Threshold for determining if a predicted shot is a goal.
+    
+    Output: 
+        pred_goals (list): Predicted number of goals for each team.
+    """
+    # Initialiser les compteurs de buts prédits
+    sum_pred_away_team = 0
+    sum_pred_home_team = 0
+
+    # Parcourir chaque prédiction
+    for idx in range(len(df)):
+        model_output = df.at[idx, 'Model Output']
+        if model_output > threshold:
+            shot_info = shots_on_goal_info[idx]
+            if shot_info['event_owner_team_id'] == Team_info['away_team_id']:
+                sum_pred_away_team += 1
+            elif shot_info['event_owner_team_id'] == Team_info['home_team_id']:
+                sum_pred_home_team += 1
+
+    pred_goals = [sum_pred_away_team, sum_pred_home_team]
 
     return pred_goals
 
-def get_period_info( game_id: str):
+def get_period_info(game_id: str):
+    data = get_play_by_play(game_id)
+    
+    period = None
+    periodTimeRemaining = None
+    
+    if 'plays' in data and data['plays']:
 
-        data = get_play_by_play(game_id)
+        last_play = data['plays'][-1]
+        period = last_play.get("period")
+        periodTimeRemaining = last_play.get("timeRemaining")
 
-        # Get Period and PeriodTimeRemaining
-        period = data["plays"][-1]["period"]
-        periodTimeRemaining = data["plays"][-1]["timeRemaining"] 
+    return period, periodTimeRemaining
 
-        return period, periodTimeRemaining
 
 def check_game_end(game_id: str):
 
@@ -161,7 +171,7 @@ with st.sidebar:
 
     workspace = st.selectbox(label='Workspace', options=['me-pic'] )
     model = st.selectbox(label='Model', options=['Logistic_reg_distance', 'r-gression-logistique-entrain-sur-la-distance-et-l-angle'])
-    version = st.selectbox(label='Model version', options=['1.0.0']) 
+    version = st.selectbox(label='Model version', options=['1.0.0','1.1.0']) 
 
     model_button = st.button('Get Model')
     
@@ -174,8 +184,11 @@ with st.sidebar:
         st.session_state['model_downloaded'] = True 
         st.session_state['model'] = model
 
-        st.session_state.servingClient.download_registry_model(workspace, st.session_state.model, version)
-        st.write(f'Got model:\n **{st.session_state.model}**!')
+        try:
+            st.session_state.servingClient.download_registry_model(workspace, st.session_state.model, version)
+            st.write(f'Got model:\n **{st.session_state.model}**!')
+        except Exception as e:
+            st.error(f"Erreur lors du téléchargement du modèle : {e}")
 
         # Reinitialize session state objects if model changes
         st.session_state.stored_df = None 
@@ -212,55 +225,68 @@ with st.container():
 
 with st.container():
     # TODO: Add Game info and predictions
-    st.header(f"Game goal predictions")
     if pred_button and st.session_state.model_downloaded:
         
         # Get dataframe of new events
-        df_MODEL = st.session_state.gameClient.process_query(game_id, model_name=st.session_state.model) 
-        
+        data_returned = st.session_state.gameClient.process_query(game_id)
+        if data_returned is not None:
+            data_never_seen_json, data_never_seen_df = data_returned
+        else:
+        # Handle the None case, maybe log an error or set default values
+            data_never_seen_json, data_never_seen_df = None, None
+            print("No more data")
         # If there are new events: 
-        if df_MODEL is not None: 
+        if data_never_seen_df is not None: 
             # Make predictions on events 
-            pred_MODEL = st.session_state.servingClient.predict(df_MODEL)
+            pred_MODEL = st.session_state.servingClient.predict(data_never_seen_df)
             
-            df = pd.DataFrame(df_MODEL, columns=st.session_state.servingClient.features) 
-            df = df.reset_index(drop=True)
-            df['Model Output'] = pred_MODEL
-
+            #df = pd.DataFrame(data_never_seen_df, columns=st.session_state.servingClient.features) 
+            #df = df.reset_index(drop=True)
+            data_never_seen_df['Model Output'] = pred_MODEL[1]
             # Calculate game actual goals and goal predictions 
-            real_goals, teams_A_H, teams_full = get_scores(game_id)
-            pred_goals = calculate_game_goals(df_MODEL, pred_MODEL, teams_A_H) 
-             
-            for i in range(len(teams_A_H)):
-                st.session_state.pred_goals[i] += pred_goals[i]
-                st.session_state.real_goals[i] = real_goals[i] 
-            st.session_state.teams = teams_A_H
-            st.session_state.teams_full = teams_full
+            shots_on_goal_info, Team_info = get_scores(data_never_seen_json)
+            pred_goals = calculate_game_goals(data_never_seen_df, shots_on_goal_info, Team_info)
+            
+            real_away_score = 0
+            real_home_score = 0
 
-        else: 
-            df = None
-            st.write(':red[No new events!]')
-        
-        # Comparing current and previous gameId:
-        if game_id == st.session_state.gameClient.gameId: 
-            # st.write('Concat!')
-            df = pd.concat([st.session_state.stored_df, df], ignore_index=True)
-            st.session_state.stored_df = df 
-        else: 
-            st.session_state.stored_df = df 
-        
+            if shots_on_goal_info:
+                latest_shot_info = shots_on_goal_info[-1]
+                real_away_score = latest_shot_info['away_score']
+                real_home_score = latest_shot_info['home_score']
 
-        # Getting Game info:
-        st.subheader(f"{st.session_state.teams_full[0]} VS {st.session_state.teams_full[1]}")
+                # ID des équipes
+                away_team_id = Team_info['away_team_id']
+                home_team_id = Team_info['home_team_id']
 
-        period, periodTimeRemaining = get_period_info()
+                teams_A_H = [away_team_id, home_team_id]
+                for i, team_id in enumerate(teams_A_H):
+                    st.session_state.pred_goals[i] += pred_goals[i]
+                    if team_id == away_team_id:
+                        st.session_state.real_goals[i] = real_away_score
+                    else:
+                        st.session_state.real_goals[i] = real_home_score
+
+                st.session_state.teams = teams_A_H
+                     
+            # Gestion de l'identifiant du jeu
+            if game_id == st.session_state.gameClient.gameId: 
+                df = pd.concat([st.session_state.stored_df, data_never_seen_df], ignore_index=True)
+                st.session_state.stored_df = data_never_seen_df 
+            else: 
+                st.session_state.stored_df = data_never_seen_df 
+                
+            away_team_name = Team_info['away_team_name']
+            home_team_name = Team_info['home_team_name']
+            st.subheader( f"Game {game_id} : {away_team_name} VS {home_team_name}")
+
+        period, periodTimeRemaining = get_period_info(game_id)
         if check_game_end(game_id): 
             st.write('**Game ended!**')
             st.write(f'Game end at: **Period:** {period}  --  **Period time remaining:** {periodTimeRemaining}')  
         else: 
             st.write('**Game live!**')        
             st.write(f'**Period:** {period}  --  **Period time remaining:** {periodTimeRemaining}')      
-
 
         # Display game goal predictions and info:
         col1, col2 = st.columns(2)
