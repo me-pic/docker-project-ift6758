@@ -1,8 +1,10 @@
 gunicorn
 waitress
-xgboost
-flask
-Flask-Caching
 pandas
-comet_ml
+flask
+flask-caching
+requests
 scikit-learn
+xgboost
+comet_ml
+setuptools
