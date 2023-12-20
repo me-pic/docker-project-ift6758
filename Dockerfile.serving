@@ -45,11 +45,10 @@ WORKDIR /code
 
 # TODO: add code, optionally a default model if you want 
 ADD serving/ /code/
-WORKDIR /code
 
 # TODO: install libs
-COPY . .
-RUN pip install --no-cache-dir -r requirements.txt
+# COPY . .
+RUN pip install -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
 ENV SERVING_PORT=5001
