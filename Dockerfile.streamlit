@@ -54,8 +54,8 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
-ENV STREAMLIT_PORT=5002
-EXPOSE ${STREAMLIT_PORT}
+ENV STREAMLIT_PORT=8892
+#EXPOSE ${STREAMLIT_PORT}
 
 
 # TODO: specify default command - this is not required because you can always specify the command

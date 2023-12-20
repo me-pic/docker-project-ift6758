@@ -22,9 +22,9 @@ services:
 ##        ARG: <ARG>
     image: ift6758/streamlit:0.0.1
     ports:
-      - 5002:5002
+      - 0.0.0.0:8892:8892
     environment:
-      SERVING_IP: "serving"
+      SERVING_IP: 0.0.0.0
       SERVING_PORT: 5001
       
 
