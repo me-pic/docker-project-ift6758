@@ -20,8 +20,8 @@ Just make sure that the required functionality is included as well
 
 
 
-IP = os.environ.get("SERVING_IP", "0.0.0.0")
-PORT = os.environ.get("SERVING_PORT", 5001)
+IP = os.environ.get("SERVING_IP", "127.0.0.1")
+PORT = os.environ.get("SERVING_PORT", 5000)
 base_url = f"http://{IP}:{PORT}"
 
 
@@ -235,6 +235,7 @@ with st.container():
         
         # Get dataframe of new events
         data_returned = st.session_state.gameClient.process_query(game_id)
+        print(data_returned)
         if data_returned is not None:
             data_never_seen_json, data_never_seen_df = data_returned
         else:
@@ -245,7 +246,7 @@ with st.container():
         if data_never_seen_df is not None: 
             # Make predictions on events 
             pred_MODEL = st.session_state.servingClient.predict(data_never_seen_df)
-            
+            print(pred_MODEL)
             #df = pd.DataFrame(data_never_seen_df, columns=st.session_state.servingClient.features) 
             #df = df.reset_index(drop=True)
             data_never_seen_df['Model Output'] = pred_MODEL[1]
@@ -281,7 +282,8 @@ with st.container():
                 st.session_state.stored_df = data_never_seen_df 
             else: 
                 st.session_state.stored_df = data_never_seen_df 
-                
+            
+            st.session_state.gameClient.gameId = game_id    
             away_team_name = Team_info['away_team_name']
             home_team_name = Team_info['home_team_name']
             st.subheader( f"Game {game_id} : {away_team_name} VS {home_team_name}")
@@ -302,7 +304,7 @@ with st.container():
         delta2 = float(np.round(pred_goals_round[1] - st.session_state.real_goals[1], decimals=1))
         col1.metric(label=f"**{st.session_state.teams[0]}** xG (actual)", value=f"{pred_goals_round[0]} ({st.session_state.real_goals[0]})", delta=delta1)
         col2.metric(label=f"**{st.session_state.teams[1]}** xG (actual)", value=f"{pred_goals_round[1]} ({st.session_state.real_goals[1]})", delta=delta2)
-
+        
     else:
         st.write('Waiting on **Ping Game** button press...')
     

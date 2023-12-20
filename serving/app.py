@@ -201,9 +201,9 @@ def predict():
     app.logger.info("---------------------- Predict Model START ----------------------")
     # Get POST json data
     json_data = request.get_json()
-    data = json_data['data']
-    app.logger.info(F"JSON DATA : {data}")
-    df = pd.DataFrame(data)
+   # data = json_data['data']
+    app.logger.info(F"JSON DATA : {json_data}")
+    df = pd.DataFrame(json_data)
     app.logger.info(F"DF : {df}")
     response = None
 

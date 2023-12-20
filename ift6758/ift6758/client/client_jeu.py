@@ -22,7 +22,7 @@ class GameClient:
             return None
 
         # Charger les données JSON
-        json_data = nhl_play_by_play_modified(gameId)
+        json_data = API_features.nhl_play_by_play_modified(gameId)
 
         # Vérifier si le jeu est terminé
         self.game_ended = any(play['typeDescKey'] == "game-end" for play in json_data['plays'])
@@ -40,7 +40,8 @@ class GameClient:
             # Ajouter les nouveaux événements au fichier JSON
             json_data['newPlays'] = new_events
 
-            df = features(json_data)
+            df = API_features.features(json_data)
+            df = df.drop(columns=['is_goal', 'empty_goal'])
             
             return json_data, df     
         else:
