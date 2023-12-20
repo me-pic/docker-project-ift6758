@@ -8,3 +8,4 @@ scikit-learn
 xgboost
 comet_ml
 setuptools
+streamlit

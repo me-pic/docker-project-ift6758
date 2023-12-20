@@ -16,8 +16,11 @@ Just make sure that the required functionality is included as well
 """
 
 
-IP = "127.0.0.1"
-PORT = 5000
+
+IP = os.environ.get("SERVING_IP", "0.0.0.0")
+PORT = os.environ.get("SERVING_PORT", 5001)
+base_url = f"http://{IP}:{PORT}"
+
 
 
 st.title("Hockey Visualisation App")
