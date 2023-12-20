@@ -1,40 +1,47 @@
 import pandas as pd
-import numpy as np
+import json
 
-from ift6758.data.API_features import *
+import sys
+import os
+current_dir = os.path.abspath(os.getcwd())
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(os.path.join(parent_dir, 'data'))
+
+from API_features import*
+
+#from ift6758.ift6758.data import API_features
 
 class GameClient:
     def __init__(self) -> None:
         self.gameId = 0
-        self.Tracker = None
-        
-        
-        
-    def process_query(self, gameId, model_name="r-gression-logistique-entrain-sur-la-distance-et-l-angle"):
-        """
-        Produces a dataframe with the features required the model.
-        Returns None if the game has already been fully processed, or if the updated
-            records do not contain data (e.g. breaks, period changes, etc.)
-        Returns a dataframe if valid records are found.
-        """
-        
-        if self.model_name != model_name: self.gameId = 0
-        self.model_name = model_name
-        
-        # load game
-        df = retrieve_nhl_play_by_play_modified(gameId)
-        
-        # if same game, slice. last_eventIdx was set in the last call
-        if self.gameId == gameId:
-            df = df.iloc[self.Tracker+1:] 
-            if len(df) == 0: return None
+        self.last_eventId = -1
+        self.game_ended = False
+
+    def process_query(self, gameId):
+        if self.game_ended and self.gameId == gameId:
+            return None
+
+        # Charger les données JSON
+        json_data = nhl_play_by_play_modified(gameId)
+
+        # Vérifier si le jeu est terminé
+        self.game_ended = any(play['typeDescKey'] == "game-end" for play in json_data['plays'])
+
+        if self.game_ended and self.gameId == gameId:
+            return None
+
+        # Extraire les nouveaux événements depuis le dernier eventId connu
+        new_events = [play for play in json_data['plays'] if play['eventId'] > self.last_eventId]
+
+        if self.gameId != gameId or new_events:
+            self.gameId = gameId
+            self.last_eventId = new_events[-1]['eventId'] if new_events else self.last_eventId
+
+            # Ajouter les nouveaux événements au fichier JSON
+            json_data['newPlays'] = new_events
+
+            df = features(json_data)
             
-        #self.game_ended = "GAME_END" in df["eventType"].values
-        self.Tracker = df.index[-1]
-
-
-        self.gameId = gameId
-        if model_name == 'r-gression-logistique-entrain-sur-la-distance-et-l-angle':
-            return df 
-        else : return df.drop('shot_angle', axis=1)
-    
+            return json_data, df     
+        else:
+            return None
