@@ -13,7 +13,7 @@ import pickle
 import logging
 
 import numpy as np
-import xgboost
+#import xgboost
 from flask import Flask, request, jsonify
 from flask_caching import Cache
 import pandas as pd

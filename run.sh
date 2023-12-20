@@ -11,4 +11,4 @@
 #first port: accept the HTTP requests on that port, second: local port
 
 
-docker run -d -p 5001:5001 -e COMET_API_KEY=$COMET_API_KEY -ti --name group8 ift6758/serving:latest
+docker run -d -p 5001:5001 -e COMET_API_KEY=$COMET_API_KEY -ti --name service ift6758/serving:1.0.0

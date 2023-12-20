@@ -5,9 +5,10 @@ import os
 import sys
 import requests
 
+#try :
 #from ift6758.ift6758.client.client_jeu import *
 #from ift6758.ift6758.client.serving_client import *
-
+#except:
 from ift6758.client.client_jeu import *
 from ift6758.client.serving_client import *
 
@@ -20,8 +21,8 @@ Just make sure that the required functionality is included as well
 
 
 
-IP = os.environ.get("SERVING_IP", "127.0.0.1")
-PORT = os.environ.get("SERVING_PORT", 5000)
+IP = os.environ.get("SERVING_IP", "0.0.0.0")
+PORT = os.environ.get("SERVING_PORT", 5001)
 base_url = f"http://{IP}:{PORT}"
 
 
@@ -322,10 +323,4 @@ with st.container():
         st.write(st.session_state.stored_df)
     else:
         st.write('Waiting on **Ping Game** button press...')
-
-with st.container():
-    pred_button = st.button('Logs')
-    if pred_button:
-        # If no model was downloaded first, ask to download model
-        st.write(st.session_state['servingClient'].logs())
 
