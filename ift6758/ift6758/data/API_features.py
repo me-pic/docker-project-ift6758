@@ -101,54 +101,56 @@ def goaliePresent(data, homeTeam_id):
     return empty_goal
 
 
+def features(data):
+        if not data or 'plays' not in data or not data['plays']:
+            return pd.DataFrame()
+        
+        awayTeam_id = data['awayTeam']['id']
+        homeTeam_id = data['homeTeam']['id']
+        
+        extracted_data = []
+        for event in data['plays']:
+            if event.get('typeDescKey') in ['shot-on-goal', 'goal']:
+                details = event.get('details', {})
+                x_coord = details.get('xCoord')
+                y_coord = details.get('yCoord')
+                is_goal_flag = 1 if event.get('typeDescKey') == 'goal' else 0
+                situation_code = event.get('situationCode', '')
+                event_owner_team_id = details.get('eventOwnerTeamId')
+
+                extracted_data.append({
+                    "eventId": event['eventId'],
+                    "xCoord": x_coord,
+                    "yCoord": y_coord,
+                    "isGoal": is_goal_flag,
+                    "situationCode": situation_code,
+                    "eventOwnerTeamId": event_owner_team_id
+                })
 
 
-def retrieve_nhl_play_by_play_modified(game_id):
+        # Convertir en DataFrame
+        df_extracted_data = pd.DataFrame(extracted_data)
+        df = pd.DataFrame(columns=['shot_distance', 'shot_angle', 'empty_goal','is_goal'])
+
+        # Appliquer les fonctions
+        df['shot_distance'] = distance_shot(df_extracted_data['xCoord'], df_extracted_data['yCoord'])
+        df['shot_angle'] = angle_shot(df_extracted_data['xCoord'], df_extracted_data['yCoord'])
+        df['empty_goal'] = goaliePresent(df_extracted_data, awayTeam_id)
+        df['is_goal'] = df_extracted_data['isGoal']
+
+        # Gestion des valeurs manquantes
+        df['shot_distance'].fillna(0, inplace=True)
+        df['is_goal'].fillna(0, inplace=True)
+        df['empty_goal'].fillna(0, inplace=True)
+        df['shot_angle'].fillna(0, inplace=True)
+        
+        return df
+
+def nhl_play_by_play_modified(game_id):
     api_url = f"https://api-web.nhle.com/v1/gamecenter/{game_id}/play-by-play"
     response = requests.get(api_url)
     if response.status_code != 200:
         return f"Erreur lors de la récupération des données: Code de statut {response.status_code}"
-
     data = response.json()
     
-    awayTeam_id = data['awayTeam']['id']
-    homeTeam_id = data['homeTeam']['id']
-    
-    extracted_data = []
-    for event in data['plays']:
-        details = event.get('details', {})
-        x_coord = details.get('xCoord')
-        y_coord = details.get('yCoord')
-        if event.get('typeDescKey') == 'shot-on-goal':
-            is_goal_flag = 1
-        else:
-            is_goal_flag = 0
-        situation_code = event.get('situationCode', '')
-        event_owner_team_id = details.get('eventOwnerTeamId')
-
-        extracted_data.append({
-            "eventId": event['eventId'],
-            "xCoord": x_coord,
-            "yCoord": y_coord,
-            "isGoal": is_goal_flag,
-            "situationCode": situation_code,
-            "eventOwnerTeamId": event_owner_team_id
-        })
-
-    # Convertir en DataFrame
-    df_extracted_data = pd.DataFrame(extracted_data)
-    df = pd.DataFrame(columns=['shot_distance', 'shot_angle', 'empty_goal','is_goal'])
-
-    # Appliquer les fonctions
-    df['shot_distance'] = df_extracted_data.apply(lambda row: distance_shot(row['xCoord'], row['yCoord']), axis=1)
-    df['shot_angle'] = df_extracted_data.apply(lambda row: angle_shot(row['xCoord'], row['yCoord']), axis=1)
-    df['empty_goal'] = goaliePresent(df_extracted_data, awayTeam_id)
-    df['is_goal'] = df_extracted_data['isGoal']
-
-    # Gestion des valeurs manquantes
-    df['shot_distance'].fillna(0, inplace=True)
-    df['is_goal'].fillna(0, inplace=True)
-    df['empty_goal'].fillna(0, inplace=True)
-    df['shot_angle'].fillna(0, inplace=True)
-
-    return df
+    return data
