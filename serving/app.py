@@ -20,12 +20,17 @@ import pandas as pd
 from comet_ml import *
 
 LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
+api_key = os.environ.get("COMET_API_KEY", None)
+if api_key is None:
+    print("NO API KEY!")
+    api_key = "K02RXr1jocA72JaixT6WZnR5s"
+
 config = {
     "DEBUG": True,
     "CACHE_TYPE": "SimpleCache",
     "CACHE_DEFAULT_TIMEOUT": 0
 }
-api_key = "K02RXr1jocA72JaixT6WZnR5s"
+
 init_model = {
     'comet-workspace': 'me-pic',
     'comet-project': 'milestone-2',
