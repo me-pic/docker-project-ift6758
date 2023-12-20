@@ -48,7 +48,7 @@ ADD serving/ /code/
 WORKDIR /code
 
 # TODO: install libs
-COPY . .
+# COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)

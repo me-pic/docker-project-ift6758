@@ -12,7 +12,7 @@ FROM python:3.7
 
 # https://docs.docker.com/engine/reference/builder/#workdir
 # Create and cd into /code as your working directory
-WORKDIR /code
+#WORKDIR /code
 
 
 # The main docker commands you will find useful:
@@ -45,13 +45,17 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-ADD ift6758/ /code/
+ADD ift6758/ /code/ift6758/
 ADD streamlit_app.py /code/
+ADD ift6758/ift6758/data/ /code/data/
+
 WORKDIR /code
 
 # TODO: install libs
-COPY . .
-RUN pip install --no-cache-dir -r requirements.txt
+# COPY . .
+RUN pip install wheel
+RUN pip install --no-cache-dir -r ift6758/requirements.txt
+RUN pip install --no-cache-dir -e ift6758
 
 # TODO: expose ports (or do this in docker-compose)
 ENV STREAMLIT_PORT=8892

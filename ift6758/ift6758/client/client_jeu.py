@@ -3,13 +3,13 @@ import json
 
 import sys
 import os
-current_dir = os.path.abspath(os.getcwd())
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(os.path.join(parent_dir, 'data'))
+#current_dir = os.path.abspath(os.getcwd())
+#parent_dir = os.path.dirname(current_dir)
+#sys.path.append(os.path.join(parent_dir, 'data'))
 
-from API_features import*
+from  data.API_features import *
 
-#from ift6758.ift6758.data import API_features
+#from ift6758.ift6758.data. API_features import *
 
 class GameClient:
     def __init__(self) -> None:

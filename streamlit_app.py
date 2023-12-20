@@ -5,8 +5,11 @@ import os
 import sys
 import requests
 
-from ift6758.ift6758.client.client_jeu import *
-from ift6758.ift6758.client.serving_client import *
+#from ift6758.ift6758.client.client_jeu import *
+#from ift6758.ift6758.client.serving_client import *
+
+from ift6758.client.client_jeu import *
+from ift6758.client.serving_client import *
 
 
 """
@@ -318,5 +321,9 @@ with st.container():
     else:
         st.write('Waiting on **Ping Game** button press...')
 
-
+with st.container():
+    pred_button = st.button('Logs')
+    if pred_button:
+        # If no model was downloaded first, ask to download model
+        st.write(st.session_state['servingClient'].logs())
 
