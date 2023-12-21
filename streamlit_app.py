@@ -235,7 +235,7 @@ with st.container():
     if pred_button and st.session_state.model_downloaded:
         
         # Get dataframe of new events
-        data_returned = st.session_state.gameClient.process_query(game_id)
+        data_returned = st.session_state.gameClient.process_query(game_id, model)
         print(data_returned)
         if data_returned is not None:
             data_never_seen_json, data_never_seen_df = data_returned
