@@ -177,7 +177,7 @@ with st.sidebar:
     # TODO: Add input for the sidebar
 
     workspace = st.selectbox(label='Workspace', options=['me-pic'] )
-    model = st.selectbox(label='Model', options=['Logistic_reg_distance', 'r-gression-logistique-entrain-sur-la-distance-et-l-angle'])
+    model = st.selectbox(label='Model', options=['logistic_reg_distance', 'r-gression-logistique-entrain-sur-la-distance-et-l-angle'])
     version = st.selectbox(label='Model version', options=['1.0.0','1.1.0']) 
 
     model_button = st.button('Get Model')
