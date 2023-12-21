@@ -17,7 +17,7 @@ class GameClient:
         self.last_eventId = -1
         self.game_ended = False
 
-    def process_query(self, gameId, model):
+    def process_query(self, gameId):
         if self.game_ended and self.gameId == gameId:
             return None
 
@@ -43,9 +43,6 @@ class GameClient:
             df = features(json_data)
             df = df.drop(columns=['is_goal', 'empty_goal'])
             
-            if model == 'logistic_reg_distance':
-                df = df.drop(columns=['shot_angle'])
-
             return json_data, df     
         else:
             return None
