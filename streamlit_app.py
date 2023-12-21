@@ -280,8 +280,12 @@ with st.container():
             # Gestion de l'identifiant du jeu
             if game_id == st.session_state.gameClient.gameId: 
                 df = pd.concat([st.session_state.stored_df, data_never_seen_df], ignore_index=True)
+                if st.session_state.model == 'logistic_reg_distance':
+                    data_never_seen_df = data_never_seen_df.drop(columns=['shot_angle'])
                 st.session_state.stored_df = data_never_seen_df 
-            else: 
+            else:
+                if st.session_state.model == 'logistic_reg_distance':
+                    data_never_seen_df = data_never_seen_df.drop(columns=['shot_angle']) 
                 st.session_state.stored_df = data_never_seen_df 
             
             st.session_state.gameClient.gameId = game_id    
